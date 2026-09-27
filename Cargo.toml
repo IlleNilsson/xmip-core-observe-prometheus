@@ -1,25 +1,32 @@
 # Its own workspace root, so this repository builds on its own.
-#
-# Every module repository carries this and the template did not, which stopped
-# mattering the moment the template stopped sitting beside the estate: nested at
-# template/rust, cargo walked up, found the root workspace and refused to build.
-#
-# It would have bitten a generated repository the same way. A template that does
-# not obey the estate's rules produces repositories that start out breaking
-# them — doc/governance/rust-style.md section 4.
 [workspace]
 
 [package]
-name = "xmip-template-rust"
+name = "xmip-core-observe-prometheus"
 version = "0.1.0"
 edition = "2024"
 license = "AGPL-3.0-or-later"
-repository = "https://github.com/IlleNilsson/xmip-template-rust"
-description = "Starter template for a Rust Xmip module repository."
+repository = "https://github.com/IlleNilsson/xmip-core-observe-prometheus"
+description = "Prometheus scrape endpoint: the figures the OTLP exporter sends, per scope, in the text exposition format 0.0.4 at /metrics, rendered at each scrape from the last snapshot the node published and served by xmip-core-transport-http on a thread of its own. A xmip-core-observe technology."
 publish = false
 
 [lib]
 path = "src/lib.rs"
+
+[dependencies]
+# A Technology depends on its parent Capability, never the reverse
+# (repository-model.md). The snapshot and the figures a scrape reads are
+# observe's; this crate writes them as the exposition format and names none
+# of its own.
+observe = { package = "xmip-core-observe", git = "https://github.com/IlleNilsson/xmip-core-observe", branch = "main" }
+# The request a scraper sends and the answer it gets (`net::http`).
+net = { package = "xmip-core-library-net", git = "https://github.com/IlleNilsson/xmip-core-library-net", branch = "main" }
+# Binding the endpoint, and the one bounded connect that wakes it to close
+# (`transport::socket`).
+transport = { package = "xmip-core-transport", git = "https://github.com/IlleNilsson/xmip-core-transport", branch = "main" }
+# Taking a scrape off a connection in the version it opens with: HTTP/1.1,
+# or HTTP/2 by prior knowledge (`server::answer_on`). Not a second server.
+transport-http = { package = "xmip-core-transport-http", git = "https://github.com/IlleNilsson/xmip-core-transport-http", branch = "main" }
 
 [lints.rust]
 # forbid, not deny: a module has no business writing unsafe. The one exception
@@ -40,3 +47,6 @@ missing_errors_doc = "warn"
 missing_panics_doc = "warn"
 unwrap_used = "warn"
 expect_used = "allow"
+
+[profile.dev.package."*"]
+opt-level = 3

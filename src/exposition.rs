@@ -130,8 +130,15 @@ pub(crate) mod tests {
     use crate::reader::read;
     use observe::{Count, Counted, Health, HealthRecord};
 
-    fn scope(index: usize) -> String {
-        format!("xmip:///c1/node/n1/receive/location-{index:04}")
+    /// The test cluster's first node, read from its `xmip.toml` once.
+    fn node() -> &'static str {
+        static NODE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+        NODE.get_or_init(|| configure::fixture::test_cluster().node_scope(0))
+    }
+
+    /// The `index`th Receive Location, beneath [`node`].
+    pub(crate) fn scope(index: usize) -> String {
+        format!("{}/receive/location-{index:04}", node())
     }
 
     /// `scopes` Receive Locations, each with a mood and a count of every
@@ -216,9 +223,9 @@ pub(crate) mod tests {
     #[test]
     fn a_scope_that_needs_escaping_reads_back_as_itself() {
         let mut snapshot = Snapshot::new();
-        let awkward = "xmip:///c1/node/n1/receive/a\"b\\c\nd";
+        let awkward = format!("{}/receive/a\"b\\c\nd", node());
         snapshot.record_health(HealthRecord {
-            scope: awkward.to_string(),
+            scope: awkward.clone(),
             health: Health::Done,
             severity: 90,
             evidence: String::new(),

@@ -179,7 +179,7 @@ fn answer(request: &Request, snapshot: Option<&Snapshot>) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::exposition::tests::snapshot;
+    use crate::exposition::tests::{scope, snapshot};
     use crate::reader::read;
     use observe::{Health, HealthRecord};
     use std::net::TcpStream;
@@ -208,7 +208,7 @@ mod tests {
         assert!((mood(&first) - 3.0).abs() < f64::EPSILON, "stressed");
 
         changing.record_health(HealthRecord {
-            scope: "xmip:///c1/node/n1/receive/location-0000".to_string(),
+            scope: scope(0),
             health: Health::Done,
             severity: 90,
             evidence: String::new(),

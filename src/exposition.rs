@@ -4,7 +4,7 @@
 //! One metric family per figure observe names (`observe::FIGURES`) that
 //! has points, its name the figure's segments joined by underscores —
 //! `xmip_health`, `xmip_health_severity`, `xmip_bytes` — with its `# HELP`
-//! and `# TYPE`, then one sample per scope, labelled `scope` and, for a
+//! and `# TYPE`, then one sample per scope, labeled `scope` and, for a
 //! mood, `mood`. No timestamps: a scrape is of now, which is what
 //! Prometheus asks an exporter to expose.
 //!

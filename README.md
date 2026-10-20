@@ -15,7 +15,7 @@ own.
 figure's segments joined by underscores: `xmip_health`,
 `xmip_health_severity`, `xmip_streams`, `xmip_messages`, `xmip_journeys`,
 `xmip_bytes`, `xmip_retrying`, `xmip_failed`. Each has its `# HELP` and
-`# TYPE`, then a sample per scope labelled `scope`, and a mood's `mood`. A
+`# TYPE`, then a sample per scope labeled `scope`, and a mood's `mood`. A
 mood's value is its rank, `fine` 0 to `holding` 6. No timestamps: a scrape
 is of now.
 

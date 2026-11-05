@@ -29,7 +29,7 @@ transport = { package = "xmip-core-transport", git = "https://github.com/IlleNil
 transport-http = { package = "xmip-core-transport-http", git = "https://github.com/IlleNilsson/xmip-core-transport-http", branch = "main" }
 
 [dev-dependencies]
-# The test cluster's names, from its `xmip.toml` (`configure::fixture`).
+# The test cluster's names, from its `cluster.xmip` (`configure::fixture`).
 configure = { package = "xmip-core-configure", git = "https://github.com/IlleNilsson/xmip-core-configure", branch = "main", features = ["test-support"] }
 
 [lints.rust]

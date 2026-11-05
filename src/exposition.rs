@@ -130,7 +130,7 @@ pub(crate) mod tests {
     use crate::reader::read;
     use observe::{Count, Counted, Health, HealthRecord};
 
-    /// The test cluster's first node, read from its `xmip.toml` once.
+    /// The test cluster's first node, read from its `cluster.xmip` once.
     fn node() -> &'static str {
         static NODE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
         NODE.get_or_init(|| configure::fixture::test_cluster().node_scope(0))

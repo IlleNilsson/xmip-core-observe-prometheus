@@ -132,8 +132,9 @@ pub(crate) mod tests {
 
     /// The test cluster's first node, read from its `cluster.xmip` once.
     fn node() -> &'static str {
-        static NODE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-        NODE.get_or_init(|| configure::fixture::test_cluster().node_scope(0))
+        static NODE: std::sync::LazyLock<String> =
+            std::sync::LazyLock::new(|| configure::fixture::test_cluster().node_scope(0));
+        &NODE
     }
 
     /// The `index`th Receive Location, beneath [`node`].

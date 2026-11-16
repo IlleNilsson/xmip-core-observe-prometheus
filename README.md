@@ -29,9 +29,10 @@ and each scope's label is written once per scrape.
 
 ## How it is served
 
-`Scrape::start(bind, timeout)` listens on `bind` — `0.0.0.0:9464`, or
-`127.0.0.1:0` for any free port (`address` says which) — and serves on a
-thread of its own. The node hands it each snapshot it publishes,
+`Scrape::start(bind, timeout, clock)` listens on `bind` — `0.0.0.0:9464`,
+or `127.0.0.1:0` for any free port (`address` says which) — and serves on a
+thread of its own, an HTTP/2 scraper's frames in a span counted on
+`clock`, the node's (ADR-0068, amendment 2026-11-16). The node hands it each snapshot it publishes,
 `Scrape::offer(Arc<Snapshot>)`: a lock and a handle, nothing else. A scrape
 takes whatever is held once its request is read and renders it then, so it
 never reads a copy older than the last change, and the node never waits for

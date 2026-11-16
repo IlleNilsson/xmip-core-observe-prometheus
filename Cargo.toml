@@ -27,6 +27,10 @@ transport = { package = "xmip-core-transport", git = "https://github.com/IlleNil
 # Taking a scrape off a connection in the version it opens with: HTTP/1.1,
 # or HTTP/2 by prior knowledge (`server::answer_on`). Not a second server.
 transport-http = { package = "xmip-core-transport-http", git = "https://github.com/IlleNilsson/xmip-core-transport-http", branch = "main" }
+# The Clock a scrape over HTTP/2 counts its frames in a span on: the
+# node's, handed in as the endpoint starts (ADR-0068, amendment
+# 2026-11-16).
+xcore = { package = "xmip-core", git = "https://github.com/IlleNilsson/xmip-core", branch = "main" }
 
 [dev-dependencies]
 # The test cluster's names, from its `cluster.xmip` (`configure::fixture`).

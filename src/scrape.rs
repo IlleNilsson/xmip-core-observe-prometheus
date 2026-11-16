@@ -18,6 +18,7 @@ use std::time::Duration;
 
 use net::http::{Request, Response};
 use observe::Snapshot;
+use xcore::Clock;
 
 use crate::exposition::{CONTENT_TYPE, write};
 
@@ -42,11 +43,13 @@ pub struct Scrape {
 impl Scrape {
     /// Listen on `bind` — `0.0.0.0:9464`, or `127.0.0.1:0` for any free
     /// port — and serve scrapes, each connection's reads bounded by
-    /// `timeout` so a scraper that stalls holds up nothing but itself.
+    /// `timeout` so a scraper that stalls holds up nothing but itself, and
+    /// an HTTP/2 scraper's frames in a span counted on `clock`, the node's
+    /// (ADR-0068, amendment 2026-11-16).
     ///
     /// # Errors
     /// Where the address could not be bound or the thread started.
-    pub fn start(bind: &str, timeout: Duration) -> Result<Self, String> {
+    pub fn start(bind: &str, timeout: Duration, clock: Arc<dyn Clock>) -> Result<Self, String> {
         let (listener, _) = transport::socket::bind_tcp(bind).map_err(|failure| failure.message)?;
         let address = listener
             .local_addr()
@@ -55,7 +58,7 @@ impl Scrape {
         let shared = Arc::clone(&held);
         let server = std::thread::Builder::new()
             .name("xmip-observe-prometheus".to_string())
-            .spawn(move || serve(&listener, &shared, timeout))
+            .spawn(move || serve(&listener, &shared, (timeout, &clock)))
             .map_err(|failure| format!("starting the scrape endpoint: {failure}"))?;
         Ok(Self {
             held,
@@ -122,8 +125,9 @@ impl Drop for Scrape {
     }
 }
 
-/// Answer scrapes until closing.
-fn serve(listener: &TcpListener, held: &Held, timeout: Duration) {
+/// Answer scrapes until closing, an HTTP/2 scraper's frames in a span
+/// counted on `clock`.
+fn serve(listener: &TcpListener, held: &Held, (timeout, clock): (Duration, &Arc<dyn Clock>)) {
     loop {
         // bounded: a scrape endpoint waits for its scraper as long as it runs; closing wakes it
         let accepted = listener.accept();
@@ -144,7 +148,7 @@ fn serve(listener: &TcpListener, held: &Held, timeout: Duration) {
         // The snapshot is taken once the request is read, so a scrape is
         // of the last change before it. A scraper that breaks its
         // connection has only itself to blame; the endpoint goes on.
-        if transport_http::server::answer_on(stream, |request| {
+        if transport_http::server::answer_on(stream, Arc::clone(clock), |request| {
             let snapshot = held
                 .snapshot
                 .lock()
@@ -185,6 +189,10 @@ mod tests {
     use std::net::TcpStream;
     use std::time::Instant;
 
+    fn system() -> Arc<dyn Clock> {
+        Arc::new(xcore::SystemClock)
+    }
+
     fn scrape(address: SocketAddr, path: &str) -> Response {
         let stream = TcpStream::connect(address).expect("connect");
         net::http::exchange(stream, &Request::new("GET", path)).expect("answered")
@@ -197,7 +205,8 @@ mod tests {
 
     #[test]
     fn a_scrape_reads_the_last_change_and_nothing_older() {
-        let endpoint = Scrape::start("127.0.0.1:0", Duration::from_secs(5)).expect("start");
+        let endpoint =
+            Scrape::start("127.0.0.1:0", Duration::from_secs(5), system()).expect("start");
         let empty = scrape(endpoint.address(), METRICS_PATH);
         assert_eq!((empty.status, empty.body.len()), (200, 0), "nothing yet");
 
@@ -223,7 +232,8 @@ mod tests {
 
     #[test]
     fn another_path_or_method_is_refused_and_http_2_is_served() {
-        let endpoint = Scrape::start("127.0.0.1:0", Duration::from_secs(5)).expect("start");
+        let endpoint =
+            Scrape::start("127.0.0.1:0", Duration::from_secs(5), system()).expect("start");
         endpoint.offer(Arc::new(snapshot(1)));
         assert_eq!(scrape(endpoint.address(), "/").status, 404);
         let stream = TcpStream::connect(endpoint.address()).expect("connect");
@@ -246,7 +256,8 @@ mod tests {
 
     #[test]
     fn a_scraper_that_never_sends_holds_up_only_itself() {
-        let endpoint = Scrape::start("127.0.0.1:0", Duration::from_millis(200)).expect("start");
+        let endpoint =
+            Scrape::start("127.0.0.1:0", Duration::from_millis(200), system()).expect("start");
         endpoint.offer(Arc::new(snapshot(1)));
         let _silent = TcpStream::connect(endpoint.address()).expect("connect");
         let began = Instant::now();
@@ -282,7 +293,8 @@ mod tests {
             written[190]
         );
 
-        let endpoint = Scrape::start("127.0.0.1:0", Duration::from_secs(5)).expect("start");
+        let endpoint =
+            Scrape::start("127.0.0.1:0", Duration::from_secs(5), system()).expect("start");
         let mut offered = Vec::new();
         let mut answered = Vec::new();
         for _ in 0..50 {

@@ -232,7 +232,8 @@ mod tests {
 
         let stream = TcpStream::connect(endpoint.address()).expect("connect");
         let request = Request::new("GET", METRICS_PATH).header("Host", "localhost");
-        let answer = net::http2::exchange(stream, "http", &request).expect("answered");
+        let answer =
+            net::http2::exchange(stream, "http", Box::new(|| 0), &request).expect("answered");
         assert_eq!(answer.status, 200);
         assert_eq!(
             read(answer.text().expect("text"))

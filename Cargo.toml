@@ -1,11 +1,11 @@
 [package]
 name = "xmip-core-observe-prometheus"
-version = "0.1.0"
-edition = "2024"
-license = "AGPL-3.0-or-later"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 repository = "https://github.com/IlleNilsson/xmip-core-observe-prometheus"
 description = "Prometheus scrape endpoint: the figures the OTLP exporter sends, per scope, in the text exposition format 0.0.4 at /metrics, rendered at each scrape from the last snapshot the node published and served by xmip-core-transport-http on a thread of its own. A xmip-core-observe technology."
-publish = false
+publish.workspace = true
 
 [lib]
 path = "src/lib.rs"
@@ -33,22 +33,5 @@ xcore = { package = "xmip-core", git = "https://github.com/IlleNilsson/xmip-core
 # The test cluster's names, from its `cluster.xmip` (`configure::fixture`).
 configure = { package = "xmip-core-configure", git = "https://github.com/IlleNilsson/xmip-core-configure", branch = "main", features = ["test-support"] }
 
-[lints.rust]
-# forbid, not deny: a module has no business writing unsafe. The one exception
-# in the estate is xmip-core-abi, which holds the extern "C" vtable over
-# include/xmip_module.h and lowers this to deny with a reason at the call site.
-unsafe_code = "forbid"
-
-[lints.clippy]
-# Warned, never denied. doc/governance/rust-style.md section 3: a function
-# length gate was tried in this estate's PowerShell and produced a sixteen-entry
-# waiver list while catching nothing. The number worth reading is branches, and
-# clippy prints both.
-too_many_lines = "warn"
-
-# The ones that catch real defects rather than taste.
-pedantic = { level = "warn", priority = -1 }
-missing_errors_doc = "warn"
-missing_panics_doc = "warn"
-unwrap_used = "warn"
-expect_used = "allow"
+[lints]
+workspace = true

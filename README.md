@@ -57,11 +57,6 @@ every count, is 8,000 samples and 565 kB.
 | Writing the text | the scrape | 0.72–0.92 ms |
 | A change scraped on loopback | end to end | 1.7–2.0 ms |
 
-## Toolchain
-
-`rust-toolchain.toml` pins the toolchain for the whole estate. Do not change it
-here.
-
 ## Verification
 
 The included workflow is manual-only and calls the versioned shared workflow at
